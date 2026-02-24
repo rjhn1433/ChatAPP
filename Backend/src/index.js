@@ -17,8 +17,8 @@ const server = createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL, // production frontend
-];
+  process.env.CLIENT_URL,
+].filter(Boolean); // removes undefined if CLIENT_URL not set
 
 /* ================= SOCKET.IO ================= */
 
@@ -72,13 +72,19 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman, mobile apps)
       if (!origin) return callback(null, true);
+
+      if (allowedOrigins.length === 0) {
+        return callback(null, true);
+      }
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
       }
+
+      console.log("Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
