@@ -73,14 +73,20 @@ export const useChatStore = create((set, get) => ({
     try {
       await axiosInstance.post(`/messages/accept/${userId}`);
 
+      // Remove from pending list
       set((state) => ({
         messageRequests: state.messageRequests.filter(
           (u) => u._id !== userId
         ),
       }));
 
+      // 🔥 Force refresh users & requests from backend
+      await get().getUsers();
+      await get().getMessageRequests();
+
       toast.success("Request accepted");
     } catch (error) {
+      console.log("Error accepting request:", error);
       toast.error("Failed to accept request");
     }
   },
