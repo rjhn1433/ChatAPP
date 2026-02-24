@@ -17,7 +17,7 @@ const server = createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL, // production frontend
+  process.env.FRONTEND_URL, // production frontend
 ];
 
 /* ================= SOCKET.IO ================= */
