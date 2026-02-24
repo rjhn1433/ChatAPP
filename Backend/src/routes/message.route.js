@@ -14,7 +14,7 @@ const router = express.Router();
 router.get('/users', protectRoute, getUserForSidebar)
 router.post('/send/:id', protectRoute, sendMessage)
 router.get("/requests", protectRoute, getMessageRequests);
-router.put("/accept/:id", protectRoute, acceptMessageRequest);
+router.post("/accept/:id", protectRoute, acceptMessageRequest);
 router.put("/block/:id", protectRoute, blockUser);
 router.get('/:id', protectRoute, getMessages)
 

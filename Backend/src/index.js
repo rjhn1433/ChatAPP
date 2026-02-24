@@ -13,18 +13,11 @@ import { Server } from "socket.io";
 const app = express();
 const server = createServer(app);
 
-/* ================= CORS CONFIG ================= */
-
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.CLIENT_URL,
-].filter(Boolean); // removes undefined if CLIENT_URL not set
-
 /* ================= SOCKET.IO ================= */
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: process.env.CLIENT_URL,
     credentials: true,
   },
 });
@@ -71,21 +64,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like Postman, mobile apps)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.length === 0) {
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.log("Blocked by CORS:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
