@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // 🔥 MUST BE FIRST
+dotenv.config(); // MUST BE FIRST
 
 import express from "express";
 import authRoutes from "./routes/auth.route.js";
@@ -13,11 +13,18 @@ import { Server } from "socket.io";
 const app = express();
 const server = createServer(app);
 
+/* ================= CORS CONFIG ================= */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL, // production frontend
+];
+
 /* ================= SOCKET.IO ================= */
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   },
 });
@@ -33,10 +40,9 @@ io.on("connection", (socket) => {
 
   console.log("User connected:", userId);
 
-  // Send online users list to everyone
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  // 🔹 Typing Indicator
+  // Typing Indicator
   socket.on("typing", ({ to }) => {
     const receiverSocketId = userSocketMap[to];
     if (receiverSocketId) {
@@ -65,9 +71,16 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
 
