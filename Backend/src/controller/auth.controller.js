@@ -5,6 +5,14 @@ import cloudinary from "../lib/cloudinary.js";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 
+const setAuthCookie = (res, token) => {
+  res.cookie("jwt", token, {
+    httpOnly: true,
+    secure: true, // required for HTTPS (Render + Vercel)
+    sameSite: "none", // required for cross-site cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
 
 export const signup = async (req, res) => {
     const {fullName, email, password} = req.body
@@ -32,12 +40,13 @@ export const signup = async (req, res) => {
 
         if(newUser){
 
-            generateToken(newUser._id, res)
+            const token = generateToken(newUser._id);
+            setAuthCookie(res, token);
             await newUser.save()
 
             res.status(201).json({
                 _id:newUser._id,
-                fullname:newUser.fullName,
+                fullName: newUser.fullName,
                 email:newUser.email,
                 profilePic:newUser.profilePic
             })
@@ -66,7 +75,8 @@ export const login = async (req, res) => {
             return res.status(400).json({message:"Incorrect Password"})
         }
 
-        generateToken(user._id, res)
+        const token = generateToken(user._id);
+        setAuthCookie(res, token);
 
         res.status(200).json({
             _id:user._id,
@@ -84,7 +94,12 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try{
-        res.cookie("jwt","",{maxAge:0})
+        res.cookie("jwt", "", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          expires: new Date(0),
+        });
         res.status(200).json({message:"logged out succesfully"})
 
     }catch(error){
@@ -180,7 +195,7 @@ export const forgotPassword = async (req, res) => {
       },
     });
 
-    const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
