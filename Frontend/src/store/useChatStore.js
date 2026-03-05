@@ -78,6 +78,7 @@ export const useChatStore = create((set, get) => ({
         messageRequests: state.messageRequests.filter(
           (u) => u._id !== userId
         ),
+        isRequestPending: false,
       }));
 
       // 🔥 Force refresh users & requests from backend
