@@ -174,8 +174,16 @@ export const sendMessage = async (req, res) => {
     await newMessage.save();
 
     const receiverSocketId = userSocketMap[receiverId];
+    const senderSocketId = userSocketMap[senderId];
+
+    // emit to receiver
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    // emit to sender (keeps sender UI instantly in sync)
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("newMessage", newMessage);
     }
 
     res.status(201).json(newMessage);
