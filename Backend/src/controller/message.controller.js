@@ -128,6 +128,18 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ message: "You are blocked by this user" });
     }
 
+    // Check if a request is already pending
+    const isRequestPending = receiver.messageRequests?.some(
+      (id) => id.toString() === senderId.toString()
+    );
+
+    if (isRequestPending) {
+      return res.status(200).json({
+        message: "Waiting for user to accept your request.",
+      });
+    }
+
+    // Check if a chat already exists
     const existingChat = await Message.findOne({
       $or: [
         { senderId, receiverId },
@@ -135,11 +147,10 @@ export const sendMessage = async (req, res) => {
       ],
     });
 
+    // If no chat and no request → create request
     if (!existingChat) {
-      if (!receiver.messageRequests.includes(senderId)) {
-        receiver.messageRequests.push(senderId);
-        await receiver.save();
-      }
+      receiver.messageRequests.push(senderId);
+      await receiver.save();
 
       return res.status(200).json({
         message: "Message request sent. Waiting for approval.",
