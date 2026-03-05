@@ -222,6 +222,16 @@ export const acceptMessageRequest = async (req, res) => {
 
     await user.save();
 
+    // Create an initial empty message to establish the conversation
+    const initialMessage = new Message({
+      senderId: senderId,
+      receiverId: req.user._id,
+      text: "",
+      seen: true,
+    });
+
+    await initialMessage.save();
+
     res.status(200).json({ message: "Message request accepted" });
   } catch (error) {
     console.log("Error in acceptMessageRequest:", error.message);
