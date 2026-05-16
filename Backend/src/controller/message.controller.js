@@ -163,18 +163,19 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    const receiverSocketId = userSocketMap[receiverId];
+    const senderSocketId = userSocketMap[senderId];
+
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
       image: imageUrl,
       seen: false,
+      delivered: receiverSocketId ? true : false,
     });
 
     await newMessage.save();
-
-    const receiverSocketId = userSocketMap[receiverId];
-    const senderSocketId = userSocketMap[senderId];
 
     // emit to receiver
     if (receiverSocketId) {

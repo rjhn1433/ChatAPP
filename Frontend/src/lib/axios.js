@@ -10,5 +10,30 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Debug log (remove later if you want)
-console.log("API BASE URL:", BASE_URL);
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Prevent infinite loop on refresh failure
+    if (originalRequest.url === '/auth/refresh') {
+        return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        // Log out the user or trigger state clear if refresh fails
+        useAuthStore.getState().setAuthUser(null);
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Import at the top
+import { useAuthStore } from "../store/useAuthStore";

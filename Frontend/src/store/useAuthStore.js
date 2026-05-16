@@ -17,6 +17,8 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
 
+  setAuthUser: (user) => set({ authUser: user }),
+
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
@@ -67,7 +69,29 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Logout failed");
+    }
+  },
+
+  logoutAll: async () => {
+    try {
+      await axiosInstance.post("/auth/logout-all");
+      set({ authUser: null });
+      toast.success("Logged out of all devices");
+      get().disconnectSocket();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to logout all devices");
+    }
+  },
+
+  changePassword: async (data) => {
+    try {
+      const res = await axiosInstance.put("/auth/change-password", data);
+      toast.success(res.data.message);
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to change password");
+      return false;
     }
   },
 

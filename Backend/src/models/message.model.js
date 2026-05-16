@@ -21,7 +21,15 @@ const messageSchema = new mongoose.Schema(
         seen: {
             type: Boolean,
             default: false,
-    },
+        },
+        delivered: {
+            type: Boolean,
+            default: false,
+        },
+        isPinned: {
+            type: Boolean,
+            default: false,
+        },
     },
     {timestamps:true}
 );

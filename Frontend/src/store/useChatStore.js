@@ -15,6 +15,7 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
   isSending: false,
+  typingUsers: [], // Array of user IDs who are currently typing
 
   // GET USERS
   getUsers: async () => {
@@ -157,6 +158,12 @@ export const useChatStore = create((set, get) => ({
             m._id === tempMessage._id ? res.data : m
           ),
         }));
+        
+        // Emit markDelivered to let sender know if we're online and receiver
+        const socket = useAuthStore.getState().socket;
+        if(socket) {
+             socket.emit("markDelivered", { messageId: res.data._id, senderId: res.data.receiverId });
+        }
       } else {
         toast(res.data.message);
       }
@@ -176,6 +183,9 @@ export const useChatStore = create((set, get) => ({
 
     socket.off("newMessage");
     socket.off("messagesSeen");
+    socket.off("messageDelivered");
+    socket.off("userTyping");
+    socket.off("userStoppedTyping");
 
     // 🔹 HANDLE NEW MESSAGE
     socket.on("newMessage", (newMessage) => {
@@ -235,6 +245,29 @@ export const useChatStore = create((set, get) => ({
         ),
       }));
     });
+
+    socket.on("messageDelivered", ({ messageId }) => {
+        set((state) => ({
+            messages: state.messages.map(msg => 
+                msg._id === messageId ? { ...msg, delivered: true } : msg
+            )
+        }));
+    });
+
+    socket.on("userTyping", ({ senderId }) => {
+        set((state) => {
+            if(!state.typingUsers.includes(senderId)) {
+                return { typingUsers: [...state.typingUsers, senderId] };
+            }
+            return state;
+        });
+    });
+
+    socket.on("userStoppedTyping", ({ senderId }) => {
+        set((state) => ({
+            typingUsers: state.typingUsers.filter(id => id !== senderId)
+        }));
+    });
   },
 
   unsubscribeFromMessages: () => {
@@ -242,6 +275,19 @@ export const useChatStore = create((set, get) => ({
     if (!socket) return;
     socket.off("newMessage");
     socket.off("messagesSeen");
+    socket.off("messageDelivered");
+    socket.off("userTyping");
+    socket.off("userStoppedTyping");
+  },
+
+  emitTyping: (receiverId) => {
+      const socket = useAuthStore.getState().socket;
+      if(socket) socket.emit("typing", { receiverId });
+  },
+
+  emitStopTyping: (receiverId) => {
+      const socket = useAuthStore.getState().socket;
+      if(socket) socket.emit("stopTyping", { receiverId });
   },
 
   openProfile: () => set({ isProfileOpen: true }),

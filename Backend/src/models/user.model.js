@@ -20,6 +20,28 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        bio: {
+            type: String,
+            default: "",
+            maxlength: 150,
+        },
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
+        verificationToken: {
+            type: String,
+        },
+        verificationTokenExpires: {
+            type: Date,
+        },
+        refreshTokens: [
+            { type: String }
+        ],
+        theme: {
+            type: String,
+            default: "dark",
+        },
         messageRequests: [
             { type: mongoose.Schema.Types.ObjectId, ref: "User" }
         ],
